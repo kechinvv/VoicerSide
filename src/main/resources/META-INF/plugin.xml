@@ -9,7 +9,7 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.kechinvv.voicerside.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <toolWindow factoryClass="com.github.kechinvv.voicerside.toolWindow.VoicerToolWindowFactory" id="Voicer"/>
     </extensions>
 
     <applicationListeners>
