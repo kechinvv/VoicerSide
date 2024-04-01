@@ -25,9 +25,7 @@ repositories {
 dependencies {
 //    implementation(libs.annotations)
     intellijPlatform {
-//        writerside("2023.3")
-//        create("WRS", "2023.3")
-        local("/home/valera/.local/share/JetBrains/Toolbox/apps/writerside/")
+        intellijIdeaCommunity("2023.3")
     }
 }
 
