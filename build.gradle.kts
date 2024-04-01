@@ -1,5 +1,3 @@
-import org.jetbrains.intellij.platform.gradle.extensions.TestFrameworkType
-
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
 
