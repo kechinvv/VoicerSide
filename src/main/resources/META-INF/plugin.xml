@@ -4,14 +4,18 @@
     <name>VoicerSide</name>
     <vendor>kechinvv</vendor>
 
-    <depends>com.intellij.modules.platform</depends>
+<!--    <depends>com.intellij.modules.platform</depends>-->
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.kechinvv.voicerside.toolWindow.VoicerToolWindowFactory" id="Voicer"/>
-    </extensions>
-
+<!--    <extensions defaultExtensionNs="com.intellij">-->
+<!--        <toolWindow factoryClass="com.github.kechinvv.voicerside.toolWindow.VoicerToolWindowFactory" id="Voicer"/>-->
+<!--    </extensions>-->
+<actions>
+    <action id="voicer" class="com.github.kechinvv.voicerside.actions.MicAction">
+        <add-to-group group-id="FilePropertiesGroup"/>
+    </action>
+</actions>
     <applicationListeners>
         <listener class="com.github.kechinvv.voicerside.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
