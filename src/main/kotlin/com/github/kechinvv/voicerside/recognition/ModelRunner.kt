@@ -1,5 +1,6 @@
 package com.github.kechinvv.voicerside.recognition
 
+import kotlinx.coroutines.*
 import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.ByteArrayOutputStream
@@ -10,10 +11,14 @@ object ModelRunner {
 
     private val modelPath = ModelRunner::class.java.classLoader.getResource("vosk-model-ru-0.22")!!.path
     private val model = Model(modelPath)
+    private var running = true
 
     fun runRecognition(callback: (String) -> Unit) {
-        val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-            60000f, 16, 2, 4, 44100f, false)
+        running = true
+        val format = AudioFormat(
+            AudioFormat.Encoding.PCM_SIGNED,
+            60000f, 16, 2, 4, 44100f, false
+        )
         val info = DataLine.Info(TargetDataLine::class.java, format)
         val microphone = AudioSystem.getLine(info) as TargetDataLine
 
@@ -27,7 +32,7 @@ object ModelRunner {
             callback("START")
 
             var previousResult: String? = null
-            while (true) {
+            while (running) {
                 numBytesRead = microphone.read(b, 0, 1024)
                 out.write(b, 0, numBytesRead)
                 var result = if (recognizer.acceptWaveForm(b, numBytesRead)) {
@@ -43,8 +48,12 @@ object ModelRunner {
             }
         }
     }
+
+    fun stop() {
+        running = false
+    }
 }
 
-fun main() {
-    ModelRunner.runRecognition { println(it) }
-}
+//suspend fun main() {
+//    ModelRunner.runRecognition { println(it) }
+//}
