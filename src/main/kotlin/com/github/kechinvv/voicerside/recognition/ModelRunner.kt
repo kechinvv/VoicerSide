@@ -1,5 +1,6 @@
 package com.github.kechinvv.voicerside.recognition
 
+import com.intellij.openapi.application.ApplicationManager
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.file.Path
@@ -7,6 +8,13 @@ import java.util.*
 
 
 object ModelRunner {
+    private lateinit var outputReaderThread: Runnable
+
+    @Volatile
+    private var stopped = false
+
+    @Volatile
+    private var process: Process? = null
 
     private val modelRunnerPath: Path by lazy {
         val os = System.getProperty("os.name").lowercase(Locale.getDefault())
@@ -18,26 +26,33 @@ object ModelRunner {
 
         baseDir.resolve("model-runner").resolve("model.jar")
     }
-    private var running = true
 
     fun runRecognition(callback: (String) -> Unit) {
-        running = true
+        stopped = false
         val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
-        val process: Process = processBuilder.start()
-        val outputReaderThread = Thread {
-            val outputReader = BufferedReader(InputStreamReader(process.inputStream))
-            outputReader.lines().iterator()
-                .forEachRemaining { line: String ->
-                    callback(line)
-                }
+        process = processBuilder.start()
+        outputReaderThread = Runnable {
+        val outputReader = BufferedReader(InputStreamReader(process!!.inputStream))
+        outputReader.lines().iterator()
+            .forEachRemaining { line: String ->
+                if (stopped) return@forEachRemaining
+                callback(line)
+            }
         }
-        outputReaderThread.start()
-        process.waitFor()
-        outputReaderThread.join()
-        process.destroy()
+        ApplicationManager.getApplication()
+            .invokeLater(outputReaderThread)
+//        process!!.waitFor()
+//        process!!.destroy()
     }
 
     fun stop() {
-        running = false
+        stopped = true
+        process!!.children().forEach { processHandle: ProcessHandle -> processHandle.destroy() }
+        process!!.destroy()
+    }
+
+    fun isActive(): Boolean {
+        return if (process != null) process!!.isAlive
+        else false
     }
 }

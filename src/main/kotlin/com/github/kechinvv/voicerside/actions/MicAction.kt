@@ -2,20 +2,14 @@ package com.github.kechinvv.voicerside.actions
 
 import com.github.kechinvv.voicerside.Bundle
 import com.github.kechinvv.voicerside.VoicerIcons
-import com.github.kechinvv.voicerside.recognition.ModelRunner
 import com.github.kechinvv.voicerside.services.PluginService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadResult
-import com.intellij.openapi.progress.runBackgroundableTask
 
 
 class MicAction : AnAction() {
-    @Volatile
-    private var recognition = false
 
     private val service = PluginService.getInstance()
 
@@ -42,7 +36,10 @@ class MicAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         if (service.isActive()) service.stopRecognition()
-        else if (e.project != null) service.runRecognition(e.project!!)
+        else {
+            val editor = e.getData(CommonDataKeys.EDITOR)
+            if (editor != null) service.runRecognition(editor!!)
+        }
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
