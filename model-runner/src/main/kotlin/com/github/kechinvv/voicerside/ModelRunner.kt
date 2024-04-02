@@ -14,7 +14,7 @@ import java.util.*
 
 object ModelRunner {
 
-    private val modelPath = {
+    private val modelPath: Path by lazy {
         val os = System.getProperty("os.name").lowercase(Locale.getDefault())
         val baseDir =
             if (os.contains("win"))

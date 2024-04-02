@@ -1,59 +1,43 @@
 package com.github.kechinvv.voicerside.recognition
 
-import kotlinx.coroutines.*
-import org.vosk.Model
-import org.vosk.Recognizer
-import java.io.ByteArrayOutputStream
-import javax.sound.sampled.*
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.nio.file.Path
+import java.util.*
 
 
 object ModelRunner {
 
-    private val modelPath = ModelRunner::class.java.classLoader.getResource("vosk-model-ru-0.22")!!.path
-    private val model = Model(modelPath)
+    private val modelRunnerPath: Path by lazy {
+        val os = System.getProperty("os.name").lowercase(Locale.getDefault())
+        val baseDir =
+            if (os.contains("win"))
+                Path.of(System.getenv("APPDATA"))
+            else
+                Path.of(System.getProperty("user.home"))
+
+        baseDir.resolve("model-runner").resolve("model.jar")
+    }
     private var running = true
 
     fun runRecognition(callback: (String) -> Unit) {
         running = true
-        val format = AudioFormat(
-            AudioFormat.Encoding.PCM_SIGNED,
-            60000f, 16, 2, 4, 44100f, false
-        )
-        val info = DataLine.Info(TargetDataLine::class.java, format)
-        val microphone = AudioSystem.getLine(info) as TargetDataLine
-
-        Recognizer(model, 120000f).use { recognizer ->
-            microphone.open(format)
-            microphone.start()
-            val out = ByteArrayOutputStream()
-            var numBytesRead: Int
-            val b = ByteArray(4096)
-
-            callback("START")
-
-            var previousResult: String? = null
-            while (running) {
-                numBytesRead = microphone.read(b, 0, 1024)
-                out.write(b, 0, numBytesRead)
-                var result = if (recognizer.acceptWaveForm(b, numBytesRead)) {
-                    recognizer.result
-                } else {
-                    recognizer.partialResult
+        val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
+        val process: Process = processBuilder.start()
+        val outputReaderThread = Thread {
+            val outputReader = BufferedReader(InputStreamReader(process.inputStream))
+            outputReader.lines().iterator()
+                .forEachRemaining { line: String ->
+                    callback(line)
                 }
-                result = result.drop(1).dropLast(1).trim()
-                if (!result.endsWith(": \"\"") && result != previousResult) {
-                    callback(result)
-                    previousResult = result
-                }
-            }
         }
+        outputReaderThread.start()
+        process.waitFor()
+        outputReaderThread.join()
+        process.destroy()
     }
 
     fun stop() {
         running = false
     }
 }
-
-//suspend fun main() {
-//    ModelRunner.runRecognition { println(it) }
-//}
