@@ -14,8 +14,7 @@ class MicAction : AnAction() {
     private val service = PluginService.getInstance()
 
     init {
-        //TODO: disabled icon
-        this.templatePresentation.disabledIcon = VoicerIcons.MIC_STOPPED
+        this.templatePresentation.disabledIcon = VoicerIcons.MIC_BLOCKED
     }
 
     override fun update(e: AnActionEvent) {
