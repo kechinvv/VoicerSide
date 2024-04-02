@@ -1,9 +1,7 @@
 package com.github.kechinvv.voicerside.services
 
-import com.github.kechinvv.voicerside.MyBundle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 

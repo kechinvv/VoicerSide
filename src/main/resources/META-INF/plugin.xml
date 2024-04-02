@@ -2,21 +2,18 @@
 <idea-plugin>
     <id>com.github.kechinvv.voicerside</id>
     <name>VoicerSide</name>
-    <vendor>kechinvv</vendor>
+    <vendor>best.itmo.students</vendor>
 
-<!--    <depends>com.intellij.modules.platform</depends>-->
+    <resource-bundle>messages.Bundle</resource-bundle>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
-
-<!--    <extensions defaultExtensionNs="com.intellij">-->
-<!--        <toolWindow factoryClass="com.github.kechinvv.voicerside.toolWindow.VoicerToolWindowFactory" id="Voicer"/>-->
-<!--    </extensions>-->
-<actions>
-    <action id="voicer" class="com.github.kechinvv.voicerside.actions.MicAction">
-        <add-to-group group-id="FilePropertiesGroup"/>
-    </action>
-</actions>
+    <actions>
+        <action id="voicer" class="com.github.kechinvv.voicerside.actions.MicAction">
+            <add-to-group group-id="ToolbarRunGroup" anchor="last"/>
+            <add-to-group group-id="MainToolbarRight" anchor="last"/>
+        </action>
+    </actions>
     <applicationListeners>
-        <listener class="com.github.kechinvv.voicerside.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        <listener class="com.github.kechinvv.voicerside.listeners.MyApplicationActivationListener"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
 </idea-plugin>
