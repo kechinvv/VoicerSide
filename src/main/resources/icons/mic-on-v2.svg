@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #13ce00;
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <circle id="Эллипс_1" data-name="Эллипс 1" class="cls-1" cx="8" cy="8" r="8"/>
+  <rect id="Прямоугольник_скругл._углы_1" data-name="Прямоугольник, скругл. углы 1" class="cls-2" x="6" y="2" width="4" height="8" rx="1.5" ry="1.5"/>
+  <rect id="Прямоугольник_скругл._углы_2" data-name="Прямоугольник, скругл. углы 2" class="cls-2" x="6" y="13" width="4" height="1" rx="0.5" ry="0.5"/>
+  <rect id="Прямоугольник_скругл._углы_3" data-name="Прямоугольник, скругл. углы 3" class="cls-2" x="7" y="11" width="2" height="3" rx="1" ry="1"/>
+  <rect id="Прямоугольник_скругл._углы_4" data-name="Прямоугольник, скругл. углы 4" class="cls-2" x="4" y="11" width="8" height="1" rx="0.5" ry="0.5"/>
+  <rect id="Прямоугольник_скругл._углы_5" data-name="Прямоугольник, скругл. углы 5" class="cls-2" x="4" y="8" width="1" height="4" rx="0.5" ry="0.5"/>
+  <rect id="Прямоугольник_скругл._углы_6" data-name="Прямоугольник, скругл. углы 6" class="cls-2" x="11" y="8" width="1" height="4" rx="0.5" ry="0.5"/>
+</svg>
