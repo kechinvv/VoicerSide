@@ -25,6 +25,9 @@ dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2023.3")
     }
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
+    implementation("net.java.dev.jna:jna:5.7.0")
+    implementation("com.alphacephei:vosk:0.3.45")
 }
 
 // Set the JVM language level used to build the project.
