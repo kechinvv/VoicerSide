@@ -12,8 +12,4 @@
             <add-to-group group-id="MainToolbarRight" anchor="last"/>
         </action>
     </actions>
-    <applicationListeners>
-        <listener class="com.github.kechinvv.voicerside.listeners.MyApplicationActivationListener"
-                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
 </idea-plugin>
