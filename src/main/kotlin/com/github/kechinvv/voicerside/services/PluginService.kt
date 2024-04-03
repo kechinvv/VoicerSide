@@ -14,13 +14,14 @@ import kotlin.math.max
 class PluginService {
 
     private val maxDocumentWidth = 120
+    private var lastPartStart = -1
 
     companion object {
         @JvmStatic
         fun getInstance() = service<PluginService>()
     }
 
-    fun editOpenedFile(editor: Editor, data: String) {
+    fun editOpenedFile(editor: Editor, data: String, isText: Boolean = false) {
         val document = editor.document
 
         var lastLine = max(0, document.lineCount - 1)
@@ -44,10 +45,16 @@ class PluginService {
         }
 
         WriteCommandAction.runWriteCommandAction(editor.project) {
-            document.insertString(endOffset, modifiedData)
+            if (lastPartStart < 0) {
+                document.insertString(endOffset, modifiedData)
+                lastPartStart = endOffset
+            }
+            else  document.replaceString(lastPartStart, endOffset, modifiedData)
             lastLine = max(0, document.lineCount - 1)
             editor.caretModel.moveToOffset(document.getLineEndOffset(lastLine))
         }
+
+        if (isText) lastPartStart = -1
     }
 
     fun runRecognition(editor: Editor) {
@@ -57,6 +64,11 @@ class PluginService {
             if (it.startsWith("\"text\"")) {
                 val content = it.substringAfter("\"text\" : \"")
                     .dropLast(1).capitalize() + ". "
+
+                editOpenedFile(editor, content, true)
+            } else if (it.startsWith("\"partial\"")) {
+                val content = it.substringAfter("\"partial\" : \"")
+                    .dropLast(1)
 
                 editOpenedFile(editor, content)
             }
