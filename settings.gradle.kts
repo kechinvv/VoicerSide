@@ -11,3 +11,4 @@ pluginManagement {
 
 
 rootProject.name = "VoicerSide"
+include("model-runner")

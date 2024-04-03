@@ -1,50 +1,68 @@
 package com.github.kechinvv.voicerside.recognition
 
-import org.vosk.Model
-import org.vosk.Recognizer
-import java.io.ByteArrayOutputStream
-import javax.sound.sampled.*
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.nio.file.Path
+import java.util.*
 
 
 object ModelRunner {
+    private var outputReaderThread: Thread? = null
 
-    private val modelPath = ModelRunner::class.java.classLoader.getResource("vosk-model-ru-0.22")!!.path
-    private val model = Model(modelPath)
+    @Volatile
+    private var stopped = false
+
+    @Volatile
+    private var process: Process? = null
+
+    @Volatile
+    private var isInitialized = false
+
+    private val modelRunnerPath: Path by lazy {
+        val os = System.getProperty("os.name").lowercase(Locale.getDefault())
+        val baseDir =
+            if (os.contains("win"))
+                Path.of(System.getenv("APPDATA"))
+            else
+                Path.of(System.getProperty("user.home"))
+
+        baseDir.resolve("model-runner").resolve("model.jar")
+    }
 
     fun runRecognition(callback: (String) -> Unit) {
-        val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-            60000f, 16, 2, 4, 44100f, false)
-        val info = DataLine.Info(TargetDataLine::class.java, format)
-        val microphone = AudioSystem.getLine(info) as TargetDataLine
-
-        Recognizer(model, 120000f).use { recognizer ->
-            microphone.open(format)
-            microphone.start()
-            val out = ByteArrayOutputStream()
-            var numBytesRead: Int
-            val b = ByteArray(4096)
-
-            callback("START")
-
-            var previousResult: String? = null
-            while (true) {
-                numBytesRead = microphone.read(b, 0, 1024)
-                out.write(b, 0, numBytesRead)
-                var result = if (recognizer.acceptWaveForm(b, numBytesRead)) {
-                    recognizer.result
-                } else {
-                    recognizer.partialResult
-                }
-                result = result.drop(1).dropLast(1).trim()
-                if (!result.endsWith(": \"\"") && result != previousResult) {
-                    callback(result)
-                    previousResult = result
-                }
+        stopped = false
+        if (!isInitialized) {
+            val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
+            process = processBuilder.start()
+            outputReaderThread = Thread {
+                val outputReader = BufferedReader(InputStreamReader(process!!.inputStream, "UTF-8"))
+                outputReader.lines().iterator()
+                    .forEachRemaining { line: String ->
+                        if (line == "START")
+                            isInitialized = true
+                        if (!stopped)
+                            callback(line)
+                    }
             }
+
+            outputReaderThread!!.start()
         }
     }
-}
 
-fun main() {
-    ModelRunner.runRecognition { println(it) }
+    fun stop() {
+        stopped = true
+    }
+
+    fun end() {
+        stop()
+        if (process != null) {
+            process!!.children().forEach { processHandle: ProcessHandle -> processHandle.destroy() }
+            process!!.destroy()
+        }
+        if (outputReaderThread != null) outputReaderThread!!.interrupt()
+    }
+
+    fun isActive(): Boolean {
+        return !stopped && isInitialized
+    }
 }

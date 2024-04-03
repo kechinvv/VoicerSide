@@ -2,6 +2,7 @@ package com.github.kechinvv.voicerside.actions
 
 import com.github.kechinvv.voicerside.Bundle
 import com.github.kechinvv.voicerside.VoicerIcons
+import com.github.kechinvv.voicerside.services.PluginService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,7 +10,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 
 
 class MicAction : AnAction() {
-    private var recognition = false
+
+    private val service = PluginService.getInstance()
 
     init {
         this.templatePresentation.disabledIcon = VoicerIcons.MIC_BLOCKED
@@ -21,7 +23,7 @@ class MicAction : AnAction() {
             e.presentation.text = Bundle.message("recognition.disabled")
         } else {
             e.presentation.isEnabled = true
-            if (recognition) {
+            if (service.isActive()) {
                 e.presentation.text = Bundle.message("recognition.running")
                 e.presentation.icon = VoicerIcons.MIC_RUNNING
             } else {
@@ -32,7 +34,11 @@ class MicAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        recognition = !recognition
+        if (service.isActive()) service.stopRecognition()
+        else {
+            val editor = e.getData(CommonDataKeys.EDITOR)
+            if (editor != null) service.runRecognition(editor!!)
+        }
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
