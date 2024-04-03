@@ -2,14 +2,11 @@ package com.github.kechinvv.voicerside.services
 
 import ai.grazie.utils.capitalize
 import com.github.kechinvv.voicerside.recognition.ModelRunner
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import java.util.concurrent.Future
 import kotlin.math.max
 
 
@@ -32,7 +29,7 @@ class PluginService {
         val lineContentLength = document.getText(TextRange(startOffset, endOffset)).length
 
         val modifiedData = when {
-            lineContentLength >= maxDocumentWidth -> System.lineSeparator() + data
+            lineContentLength >= maxDocumentWidth -> "\n" + data
 
             lineContentLength + data.length < maxDocumentWidth -> data
 
@@ -41,7 +38,7 @@ class PluginService {
                 val beforeIndex = data.substring(0, index)
                 val beforeWs = beforeIndex.substringBeforeLast(" ")
 
-                beforeWs + System.lineSeparator() +
+                beforeWs + "\n" +
                         data.substring(index + 1 - (beforeIndex.length - beforeWs.length))
             }
         }

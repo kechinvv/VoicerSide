@@ -7,7 +7,7 @@ import java.util.*
 
 
 object ModelRunner {
-    private lateinit var outputReaderThread: Thread
+    private var outputReaderThread: Thread? = null
 
     @Volatile
     private var stopped = false
@@ -31,22 +31,24 @@ object ModelRunner {
         val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
         process = processBuilder.start()
         outputReaderThread = Thread {
-        val outputReader = BufferedReader(InputStreamReader(process!!.inputStream))
-        outputReader.lines().iterator()
-            .forEachRemaining { line: String ->
-                if (stopped) return@forEachRemaining
+            val outputReader = BufferedReader(InputStreamReader(process!!.inputStream, "UTF-8"))
+            outputReader.lines().iterator()
+                .forEachRemaining { line: String ->
+                    if (stopped) return@forEachRemaining
                     callback(line)
-            }
+                }
         }
 
-        outputReaderThread.start()
+        outputReaderThread!!.start()
     }
 
     fun stop() {
         stopped = true
-        process!!.children().forEach { processHandle: ProcessHandle -> processHandle.destroy() }
-        process!!.destroy()
-        outputReaderThread.interrupt()
+        if (process != null) {
+            process!!.children().forEach { processHandle: ProcessHandle -> processHandle.destroy() }
+            process!!.destroy()
+        }
+        if (outputReaderThread != null) outputReaderThread!!.interrupt()
     }
 
     fun isActive(): Boolean {
