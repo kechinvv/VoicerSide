@@ -1,6 +1,5 @@
 package com.github.kechinvv.voicerside.recognition
 
-import com.intellij.openapi.application.ApplicationManager
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.file.Path
@@ -8,7 +7,7 @@ import java.util.*
 
 
 object ModelRunner {
-    private lateinit var outputReaderThread: Runnable
+    private lateinit var outputReaderThread: Thread
 
     @Volatile
     private var stopped = false
@@ -31,24 +30,23 @@ object ModelRunner {
         stopped = false
         val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
         process = processBuilder.start()
-        outputReaderThread = Runnable {
+        outputReaderThread = Thread {
         val outputReader = BufferedReader(InputStreamReader(process!!.inputStream))
         outputReader.lines().iterator()
             .forEachRemaining { line: String ->
                 if (stopped) return@forEachRemaining
-                callback(line)
+                    callback(line)
             }
         }
-        ApplicationManager.getApplication()
-            .invokeLater(outputReaderThread)
-//        process!!.waitFor()
-//        process!!.destroy()
+
+        outputReaderThread.start()
     }
 
     fun stop() {
         stopped = true
         process!!.children().forEach { processHandle: ProcessHandle -> processHandle.destroy() }
         process!!.destroy()
+        outputReaderThread.interrupt()
     }
 
     fun isActive(): Boolean {

@@ -25,7 +25,7 @@ class PluginService() {
         val document = editor.document
         val dataNl = data + "\n"
         WriteCommandAction.runWriteCommandAction(editor.project) {
-            document.insertString(offset, data);
+            document.insertString(document.textLength, data)
         }
         offset += dataNl.length
     }
