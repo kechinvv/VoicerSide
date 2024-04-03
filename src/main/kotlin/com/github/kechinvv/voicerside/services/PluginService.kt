@@ -2,15 +2,21 @@ package com.github.kechinvv.voicerside.services
 
 import ai.grazie.utils.capitalize
 import com.github.kechinvv.voicerside.ModelMessage
+import com.github.kechinvv.voicerside.perform.Performer
+import com.github.kechinvv.voicerside.perform.PerformerRegistry
 import com.github.kechinvv.voicerside.recognition.ModelRunner
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlin.math.max
 
 
+@OptIn(ExperimentalSerializationApi::class)
 @Service(Service.Level.PROJECT)
 class PluginService {
 
@@ -20,6 +26,16 @@ class PluginService {
         @JvmStatic
         fun getInstance() = service<PluginService>()
     }
+
+    init {
+        PerformerRegistry.registerPerformers()
+        this::class.java.classLoader.getResourceAsStream("voice-commands/ru.json")?.use {
+            PerformerRegistry.loadVoiceCommands(Json.decodeFromStream(it))
+            println("Voice commands are loaded successfully")
+        }
+    }
+
+    val performers = ArrayDeque<Performer>()
 
     fun editOpenedFile(editor: Editor, data: String) {
         val document = editor.document
@@ -44,21 +60,43 @@ class PluginService {
             }
         }
 
+        val performedData = performers.fold(modifiedData) { d, p -> p.perform(editor, d) }
+
         WriteCommandAction.runWriteCommandAction(editor.project) {
-            document.insertString(endOffset, modifiedData)
+            document.insertString(endOffset, performedData)
             lastLine = max(0, document.lineCount - 1)
             editor.caretModel.moveToOffset(document.getLineEndOffset(lastLine))
         }
     }
 
     fun runRecognition(editor: Editor) {
+        // Какой ужас...
+        val assistantName = "Док".lowercase()
+        var commandMode = false
+
         ModelRunner.runRecognition {
             println(it)
 
             ModelMessage.parseOrNull(it)?.let { message ->
-                if (message.type == ModelMessage.Type.TEXT) {
-                    val formattedSentence = message.content.capitalize() + ". "
-                    editOpenedFile(editor, formattedSentence)
+                when (message.type) {
+                    ModelMessage.Type.PARTIAL -> {
+                        if (!commandMode && message.content.startsWith(assistantName)) {
+                            commandMode = true
+                        }
+                    }
+
+                    ModelMessage.Type.TEXT -> {
+                        if (commandMode) {
+                            val command = message.content.substringAfter(assistantName).trim()
+                            PerformerRegistry.getPerformerOrNull(command)?.let { performer ->
+                                performers.addFirst(performer)
+                                commandMode = false
+                            }
+                        } else {
+                            val formattedSentence = message.content.capitalize() + ". "
+                            editOpenedFile(editor, formattedSentence)
+                        }
+                    }
                 }
             }
         }
