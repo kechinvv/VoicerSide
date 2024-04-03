@@ -1,6 +1,7 @@
 package com.github.kechinvv.voicerside.services
 
 import ai.grazie.utils.capitalize
+import com.github.kechinvv.voicerside.ModelMessage
 import com.github.kechinvv.voicerside.recognition.ModelRunner
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
@@ -54,11 +55,11 @@ class PluginService {
         ModelRunner.runRecognition {
             println(it)
 
-            if (it.startsWith("\"text\"")) {
-                val content = it.substringAfter("\"text\" : \"")
-                    .dropLast(1).capitalize() + ". "
-
-                editOpenedFile(editor, content)
+            ModelMessage.parseOrNull(it)?.let { message ->
+                if (message.type == ModelMessage.Type.TEXT) {
+                    val formattedSentence = message.content.capitalize() + ". "
+                    editOpenedFile(editor, formattedSentence)
+                }
             }
         }
     }
