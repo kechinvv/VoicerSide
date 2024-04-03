@@ -68,6 +68,10 @@ class PluginService {
         ModelRunner.stop()
     }
 
+    fun endRecognition() {
+        ModelRunner.end()
+    }
+
     fun isActive(): Boolean {
         return ModelRunner.isActive()
     }

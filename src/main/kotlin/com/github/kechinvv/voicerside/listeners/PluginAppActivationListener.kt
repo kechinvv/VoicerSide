@@ -7,10 +7,10 @@ internal class PluginAppActivationListener : AppLifecycleListener {
 
     private val service = PluginService.getInstance()
     override fun appClosing() {
-        service.stopRecognition()
+        service.endRecognition()
     }
 
     override fun appWillBeClosed(isRestart: Boolean) {
-        service.stopRecognition()
+        service.endRecognition()
     }
 }

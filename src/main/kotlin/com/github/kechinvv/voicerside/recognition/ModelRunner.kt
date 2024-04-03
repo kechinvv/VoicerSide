@@ -15,6 +15,9 @@ object ModelRunner {
     @Volatile
     private var process: Process? = null
 
+    @Volatile
+    private var isInitialized = false
+
     private val modelRunnerPath: Path by lazy {
         val os = System.getProperty("os.name").lowercase(Locale.getDefault())
         val baseDir =
@@ -28,22 +31,30 @@ object ModelRunner {
 
     fun runRecognition(callback: (String) -> Unit) {
         stopped = false
-        val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
-        process = processBuilder.start()
-        outputReaderThread = Thread {
-            val outputReader = BufferedReader(InputStreamReader(process!!.inputStream, "UTF-8"))
-            outputReader.lines().iterator()
-                .forEachRemaining { line: String ->
-                    if (stopped) return@forEachRemaining
-                    callback(line)
-                }
-        }
+        if (!isInitialized) {
+            val processBuilder = ProcessBuilder("java", "-jar", modelRunnerPath.toString())
+            process = processBuilder.start()
+            outputReaderThread = Thread {
+                val outputReader = BufferedReader(InputStreamReader(process!!.inputStream, "UTF-8"))
+                outputReader.lines().iterator()
+                    .forEachRemaining { line: String ->
+                        if (line == "START")
+                            isInitialized = true
+                        if (!stopped)
+                            callback(line)
+                    }
+            }
 
-        outputReaderThread!!.start()
+            outputReaderThread!!.start()
+        }
     }
 
     fun stop() {
         stopped = true
+    }
+
+    fun end() {
+        stop()
         if (process != null) {
             process!!.children().forEach { processHandle: ProcessHandle -> processHandle.destroy() }
             process!!.destroy()
@@ -52,7 +63,6 @@ object ModelRunner {
     }
 
     fun isActive(): Boolean {
-        return if (process != null) process!!.isAlive
-        else false
+        return !stopped && isInitialized
     }
 }
