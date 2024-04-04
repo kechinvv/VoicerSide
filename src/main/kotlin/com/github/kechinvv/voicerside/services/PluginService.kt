@@ -18,6 +18,7 @@ import kotlinx.serialization.json.decodeFromStream
 class PluginService {
 
     private val maxDocumentWidth = 120
+    private var startSentenceOffset = -1
 
     companion object {
         @JvmStatic
@@ -35,8 +36,6 @@ class PluginService {
     val performers = ArrayDeque<Performer>()
 
     fun displayMessage(editor: Editor, message: ModelMessage) {
-        if (message.type == ModelMessage.Type.PARTIAL) return  // TODO: implement partial input display
-
         val content = message.content
         val lineContentLength = editor.getCurrentLine().text.length
 
@@ -57,9 +56,15 @@ class PluginService {
         val dot = if (message.type == ModelMessage.Type.TEXT) ". " else ""
         val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) } + dot
         editor.write {
-            document.insertString(caretModel.offset, performedContent)
+            if (startSentenceOffset < 0) {
+                startSentenceOffset = caretModel.offset
+                document.insertString(caretModel.offset, performedContent)
+            } else {
+                document.replaceString(startSentenceOffset, caretModel.offset, performedContent)
+            }
             caretModel.moveToOffset(caretModel.offset + performedContent.length)
         }
+        if (message.type == ModelMessage.Type.TEXT) startSentenceOffset = -1
     }
 
     fun runRecognition(editor: Editor) {
