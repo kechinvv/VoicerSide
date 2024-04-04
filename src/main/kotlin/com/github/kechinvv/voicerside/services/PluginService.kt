@@ -34,29 +34,32 @@ class PluginService {
 
     val performers = ArrayDeque<Performer>()
 
-    fun editOpenedFile(editor: Editor, data: String) {
+    fun displayMessage(editor: Editor, message: ModelMessage) {
+        if (message.type == ModelMessage.Type.PARTIAL) return  // TODO: implement partial input display
+
+        val content = message.content
         val lineContentLength = editor.getCurrentLine().text.length
 
-        val modifiedData = when {
-            lineContentLength >= maxDocumentWidth -> "\n" + data
+        val modifiedContent = when {
+            lineContentLength >= maxDocumentWidth -> "\n" + content
 
-            lineContentLength + data.length < maxDocumentWidth -> data
+            lineContentLength + content.length < maxDocumentWidth -> content
 
             else -> {
                 val index = maxDocumentWidth - lineContentLength
-                val beforeIndex = data.substring(0, index)
+                val beforeIndex = content.substring(0, index)
                 val beforeWs = beforeIndex.substringBeforeLast(" ")
 
                 beforeWs + "\n" +
-                        data.substring(index + 1 - (beforeIndex.length - beforeWs.length))
+                        content.substring(index + 1 - (beforeIndex.length - beforeWs.length))
             }
         }
 
-        val performedData = performers.fold(modifiedData) { d, p -> p.perform(editor, d) }
+        val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) }
 
         editor.write {
-            document.insertString(caretModel.offset, performedData)
-            caretModel.moveToOffset(caretModel.offset + performedData.length)
+            document.insertString(caretModel.offset, performedContent)
+            caretModel.moveToOffset(caretModel.offset + performedContent.length)
         }
     }
 
@@ -71,9 +74,10 @@ class PluginService {
             ModelMessage.parseOrNull(it)?.let { message ->
                 when (message.type) {
                     ModelMessage.Type.PARTIAL -> {
-                        if (!commandMode && message.content.startsWith(assistantName)) {
-                            commandMode = true
-                        }
+                        if (!commandMode) {
+                            if (message.content.startsWith(assistantName)) commandMode = true
+                            else displayMessage(editor, message)
+                        }  // else: listening to command name to pe parsed in TEXT branch
                     }
 
                     ModelMessage.Type.TEXT -> {
@@ -85,8 +89,12 @@ class PluginService {
                             }
                             commandMode = false
                         } else {
-                            val formattedSentence = message.content.capitalize() + ". "
-                            editOpenedFile(editor, formattedSentence)
+                            val formattedMessage = ModelMessage(
+                                ModelMessage.Type.TEXT,
+                                message.content.capitalize() + ". "
+                            )
+                            displayMessage(editor, formattedMessage)
+                            performers.clear()  // TODO: replace with `stop` command
                         }
                     }
                 }
