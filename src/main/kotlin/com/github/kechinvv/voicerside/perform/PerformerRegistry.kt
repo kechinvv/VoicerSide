@@ -32,6 +32,7 @@ object PerformerRegistry {
         registerPerformer(PerformerGotoLineEnd())
         registerPerformer(PerformerGotoDocumentStart())
         registerPerformer(PerformerGotoDocumentEnd())
+        registerPerformer(PerformerShutdown())
     }
 
     private fun registerPerformer(performer: Performer) {
