@@ -23,6 +23,8 @@ object PerformerRegistry {
     fun registerPerformers() {
         registerPerformer(PerformerBold())
         registerPerformer(PerformerItalic())
+        registerPerformer(PerformerHeader1())
+        registerPerformer(PerformerHeader2())
         registerPerformer(PerformerIncrementOffset())
         registerPerformer(PerformerDecrementOffset())
         registerPerformer(PerformerDeleteLine())
@@ -30,6 +32,8 @@ object PerformerRegistry {
         registerPerformer(PerformerGotoLineEnd())
         registerPerformer(PerformerGotoDocumentStart())
         registerPerformer(PerformerGotoDocumentEnd())
+        registerPerformer(PerformerShutdown())
+        registerPerformer(PerformerNewLine())
     }
 
     private fun registerPerformer(performer: Performer) {

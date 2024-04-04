@@ -3,6 +3,7 @@ package com.github.kechinvv.voicerside.services
 import ai.grazie.utils.capitalize
 import com.github.kechinvv.voicerside.*
 import com.github.kechinvv.voicerside.perform.Performer
+import com.github.kechinvv.voicerside.perform.PerformerHeader
 import com.github.kechinvv.voicerside.perform.PerformerRegistry
 import com.github.kechinvv.voicerside.recognition.ModelRunner
 import com.intellij.openapi.components.Service
@@ -18,6 +19,7 @@ import kotlinx.serialization.json.decodeFromStream
 class PluginService {
 
     private val maxDocumentWidth = 120
+    private var startSentenceOffset = -1
 
     companion object {
         @JvmStatic
@@ -35,8 +37,6 @@ class PluginService {
     val performers = ArrayDeque<Performer>()
 
     fun displayMessage(editor: Editor, message: ModelMessage) {
-        if (message.type == ModelMessage.Type.PARTIAL) return  // TODO: implement partial input display
-
         val content = message.content
         val lineContentLength = editor.getCurrentLine().text.length
 
@@ -55,12 +55,22 @@ class PluginService {
             }
         }
 
-        val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) }
+        //простите, я хочу кушать
+        val dot = if (message.type == ModelMessage.Type.TEXT &&
+            (performers.isEmpty() || performers.last() !is PerformerHeader)
+        ) ". " else ""
 
+        val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) } + dot
         editor.write {
-            document.insertString(caretModel.offset, performedContent)
+            if (startSentenceOffset < 0) {
+                startSentenceOffset = caretModel.offset
+                document.insertString(caretModel.offset, performedContent)
+            } else {
+                document.replaceString(startSentenceOffset, caretModel.offset, performedContent)
+            }
             caretModel.moveToOffset(caretModel.offset + performedContent.length)
         }
+        if (message.type == ModelMessage.Type.TEXT) startSentenceOffset = -1
     }
 
     fun runRecognition(editor: Editor) {
@@ -85,13 +95,17 @@ class PluginService {
                             val command = message.content.substringAfter(assistantName).trim()
                             PerformerRegistry.getPerformerOrNull(command)?.let { performer ->
                                 performer.start(editor)
-                                if (performer.isPersistent) performers.addFirst(performer)
+                                if (performer.isPersistent) {
+                                    performers.addFirst(performer)
+                                    //еще раз простите
+                                    displayMessage(editor, ModelMessage(ModelMessage.Type.PARTIAL, ""))
+                                }
                             }
                             commandMode = false
                         } else {
                             val formattedMessage = ModelMessage(
                                 ModelMessage.Type.TEXT,
-                                message.content.capitalize() + ". "
+                                message.content.capitalize()
                             )
                             displayMessage(editor, formattedMessage)
                             performers.clear()  // TODO: replace with `stop` command
