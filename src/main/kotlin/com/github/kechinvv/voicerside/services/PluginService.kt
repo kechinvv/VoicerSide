@@ -54,6 +54,8 @@ class PluginService {
                         content.substring(index + 1 - (beforeIndex.length - beforeWs.length))
             }
         }
+
+        //простите, я хочу кушать
         val dot = if (message.type == ModelMessage.Type.TEXT &&
             (performers.isEmpty() || performers.last() !is PerformerHeader)
         ) ". " else ""
@@ -93,7 +95,11 @@ class PluginService {
                             val command = message.content.substringAfter(assistantName).trim()
                             PerformerRegistry.getPerformerOrNull(command)?.let { performer ->
                                 performer.start(editor)
-                                if (performer.isPersistent) performers.addFirst(performer)
+                                if (performer.isPersistent) {
+                                    performers.addFirst(performer)
+                                    //еще раз простите
+                                    displayMessage(editor, ModelMessage(ModelMessage.Type.PARTIAL, ""))
+                                }
                             }
                             commandMode = false
                         } else {
