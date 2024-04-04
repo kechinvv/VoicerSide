@@ -6,7 +6,7 @@ sealed interface Performer {
     val name: String
     val isPersistent: Boolean
 
-    fun start(editor: Editor, text: String) {}
+    fun start(editor: Editor)
     fun perform(editor: Editor, text: String): String
-    fun end(editor: Editor, text: String) {}
+    fun end(editor: Editor)
 }
