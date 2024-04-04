@@ -33,7 +33,9 @@ kotlin {
     jvmToolchain(17)
 }
 
-
+val printVersionName: Task = tasks.create("printVersionName") {
+    println(properties("pluginVersion").get())
+}
 
 tasks {
     wrapper {
