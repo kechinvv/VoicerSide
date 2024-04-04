@@ -16,5 +16,8 @@ class PerformerBold : PerformerWrap("makeBold", "**", "**")
 
 class PerformerItalic : PerformerWrap("makeItalic", "*", "*")
 
-class PerformerHeader1 : PerformerWrap("header1", "# ", "\n")
-class PerformerHeader2 : PerformerWrap("header2", "## ", "\n")
+sealed class PerformerHeader(name: String, level: Int) : PerformerWrap(name, "${"#".repeat(level)} ", "\n")
+
+class PerformerHeader1: PerformerHeader("insertTitle", 1)
+
+class PerformerHeader2: PerformerHeader("insertSubtitle", 2)
