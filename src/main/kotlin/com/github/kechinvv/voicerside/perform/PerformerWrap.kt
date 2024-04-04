@@ -15,3 +15,6 @@ sealed class PerformerWrap(
 class PerformerBold : PerformerWrap("makeBold", "**", "**")
 
 class PerformerItalic : PerformerWrap("makeItalic", "*", "*")
+
+class PerformerHeader1 : PerformerWrap("header1", "# ", "\n")
+class PerformerHeader2 : PerformerWrap("header2", "## ", "\n")
