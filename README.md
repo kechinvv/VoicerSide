@@ -46,12 +46,12 @@ Aliases for all commands available [here](https://github.com/kechinvv/VoicerSide
 
      Download the [latest release](https://github.com/kechinvv/VoicerSide/releases/latest) and install it manually using
      <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-2. Download [model-runner]() and [model](https://alphacephei.com/vosk/models/vosk-model-ru-0.42.zip)
+2. Download [model.jar](https://github.com/kechinvv/VoicerSide/releases/download/0.0.0/model.jar) and [model](https://alphacephei.com/vosk/models/vosk-model-ru-0.42.zip)
     - For Windows to `...AppData/Roaming/model-runner`
     - For Linux and Mac to `~/model-runner` 
 
-Contents of model-runner folder:
-* model-runner.jar
+Contents of `model-runner` folder:
+* model.jar
 * folder `model` with  model (contents of the folder from the model's archive)
 
 ---
