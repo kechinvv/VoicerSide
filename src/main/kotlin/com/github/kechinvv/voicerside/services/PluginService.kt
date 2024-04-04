@@ -1,15 +1,19 @@
 package com.github.kechinvv.voicerside.services
 
 import ai.grazie.utils.capitalize
+import com.github.kechinvv.voicerside.*
+import com.github.kechinvv.voicerside.perform.Performer
+import com.github.kechinvv.voicerside.perform.PerformerRegistry
 import com.github.kechinvv.voicerside.recognition.ModelRunner
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.TextRange
-import kotlin.math.max
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 
 
+@OptIn(ExperimentalSerializationApi::class)
 @Service(Service.Level.PROJECT)
 class PluginService {
 
@@ -20,45 +24,80 @@ class PluginService {
         fun getInstance() = service<PluginService>()
     }
 
-    fun editOpenedFile(editor: Editor, data: String) {
-        val document = editor.document
+    init {
+        PerformerRegistry.registerPerformers()
+        this::class.java.classLoader.getResourceAsStream("voice-commands/ru.json")?.use {
+            PerformerRegistry.loadVoiceCommands(Json.decodeFromStream(it))
+            println("Voice commands are loaded successfully")
+        }
+    }
 
-        var lastLine = max(0, document.lineCount - 1)
-        val startOffset = document.getLineStartOffset(lastLine)
-        val endOffset = document.getLineEndOffset(lastLine)
-        val lineContentLength = document.getText(TextRange(startOffset, endOffset)).length
+    val performers = ArrayDeque<Performer>()
 
-        val modifiedData = when {
-            lineContentLength >= maxDocumentWidth -> "\n" + data
+    fun displayMessage(editor: Editor, message: ModelMessage) {
+        if (message.type == ModelMessage.Type.PARTIAL) return  // TODO: implement partial input display
 
-            lineContentLength + data.length < maxDocumentWidth -> data
+        val content = message.content
+        val lineContentLength = editor.getCurrentLine().text.length
+
+        val modifiedContent = when {
+            lineContentLength >= maxDocumentWidth -> "\n" + content
+
+            lineContentLength + content.length < maxDocumentWidth -> content
 
             else -> {
                 val index = maxDocumentWidth - lineContentLength
-                val beforeIndex = data.substring(0, index)
+                val beforeIndex = content.substring(0, index)
                 val beforeWs = beforeIndex.substringBeforeLast(" ")
 
                 beforeWs + "\n" +
-                        data.substring(index + 1 - (beforeIndex.length - beforeWs.length))
+                        content.substring(index + 1 - (beforeIndex.length - beforeWs.length))
             }
         }
 
-        WriteCommandAction.runWriteCommandAction(editor.project) {
-            document.insertString(endOffset, modifiedData)
-            lastLine = max(0, document.lineCount - 1)
-            editor.caretModel.moveToOffset(document.getLineEndOffset(lastLine))
+        val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) }
+
+        editor.write {
+            document.insertString(caretModel.offset, performedContent)
+            caretModel.moveToOffset(caretModel.offset + performedContent.length)
         }
     }
 
     fun runRecognition(editor: Editor) {
+        // Какой ужас...
+        val assistantName = "Док".lowercase()
+        var commandMode = false
+
         ModelRunner.runRecognition {
             println(it)
 
-            if (it.startsWith("\"text\"")) {
-                val content = it.substringAfter("\"text\" : \"")
-                    .dropLast(1).capitalize() + ". "
+            ModelMessage.parseOrNull(it)?.let { message ->
+                when (message.type) {
+                    ModelMessage.Type.PARTIAL -> {
+                        if (!commandMode) {
+                            if (message.content.startsWith(assistantName)) commandMode = true
+                            else displayMessage(editor, message)
+                        }  // else: listening to command name to pe parsed in TEXT branch
+                    }
 
-                editOpenedFile(editor, content)
+                    ModelMessage.Type.TEXT -> {
+                        if (commandMode) {
+                            val command = message.content.substringAfter(assistantName).trim()
+                            PerformerRegistry.getPerformerOrNull(command)?.let { performer ->
+                                performer.start(editor)
+                                if (performer.isPersistent) performers.addFirst(performer)
+                            }
+                            commandMode = false
+                        } else {
+                            val formattedMessage = ModelMessage(
+                                ModelMessage.Type.TEXT,
+                                message.content.capitalize() + ". "
+                            )
+                            displayMessage(editor, formattedMessage)
+                            performers.clear()  // TODO: replace with `stop` command
+                        }
+                    }
+                }
             }
         }
     }
