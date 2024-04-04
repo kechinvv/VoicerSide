@@ -3,6 +3,7 @@ package com.github.kechinvv.voicerside.services
 import ai.grazie.utils.capitalize
 import com.github.kechinvv.voicerside.*
 import com.github.kechinvv.voicerside.perform.Performer
+import com.github.kechinvv.voicerside.perform.PerformerHeader
 import com.github.kechinvv.voicerside.perform.PerformerRegistry
 import com.github.kechinvv.voicerside.recognition.ModelRunner
 import com.intellij.openapi.components.Service
@@ -53,7 +54,10 @@ class PluginService {
                         content.substring(index + 1 - (beforeIndex.length - beforeWs.length))
             }
         }
-        val dot = if (message.type == ModelMessage.Type.TEXT) ". " else ""
+        val dot = if (message.type == ModelMessage.Type.TEXT &&
+            (performers.isEmpty() || performers.last() !is PerformerHeader)
+        ) ". " else ""
+
         val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) } + dot
         editor.write {
             if (startSentenceOffset < 0) {
