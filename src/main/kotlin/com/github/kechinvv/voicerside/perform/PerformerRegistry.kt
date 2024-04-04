@@ -1,5 +1,7 @@
 package com.github.kechinvv.voicerside.perform
 
+import com.github.kechinvv.voicerside.perform.navigation.*
+
 object PerformerRegistry {
 
     private val performers = mutableMapOf<String, Performer>()
@@ -24,6 +26,10 @@ object PerformerRegistry {
         registerPerformer(PerformerIncrementOffset())
         registerPerformer(PerformerDecrementOffset())
         registerPerformer(PerformerDeleteLine())
+        registerPerformer(PerformerGotoLineStart())
+        registerPerformer(PerformerGotoLineEnd())
+        registerPerformer(PerformerGotoDocumentStart())
+        registerPerformer(PerformerGotoDocumentEnd())
     }
 
     private fun registerPerformer(performer: Performer) {

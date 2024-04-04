@@ -19,8 +19,8 @@ fun Editor.getCurrentLine(): Line {
 }
 
 class Line(
-    private val document: Document,
-    private val number: Int
+    val document: Document,
+    val number: Int
 ) {
     val start: Int
         get() = document.getLineStartOffset(number)
