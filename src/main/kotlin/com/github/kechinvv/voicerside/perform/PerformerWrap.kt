@@ -16,6 +16,9 @@ class PerformerBold : PerformerWrap("makeBold", "**", "**")
 
 class PerformerItalic : PerformerWrap("makeItalic", "*", "*")
 
+class PerformerNewLine : PerformerWrap("newLine", "\n\n", "")
+
+
 sealed class PerformerHeader(name: String, level: Int) : PerformerWrap(name, "${"#".repeat(level)} ", "\n")
 
 class PerformerHeader1: PerformerHeader("insertTitle", 1)
