@@ -54,9 +54,8 @@ class PluginService {
                         content.substring(index + 1 - (beforeIndex.length - beforeWs.length))
             }
         }
-
-        val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) }
-
+        val dot = if (message.type == ModelMessage.Type.TEXT) ". " else ""
+        val performedContent = performers.fold(modifiedContent) { d, p -> p.perform(editor, d) } + dot
         editor.write {
             document.insertString(caretModel.offset, performedContent)
             caretModel.moveToOffset(caretModel.offset + performedContent.length)
@@ -91,7 +90,7 @@ class PluginService {
                         } else {
                             val formattedMessage = ModelMessage(
                                 ModelMessage.Type.TEXT,
-                                message.content.capitalize() + ". "
+                                message.content.capitalize()
                             )
                             displayMessage(editor, formattedMessage)
                             performers.clear()  // TODO: replace with `stop` command
