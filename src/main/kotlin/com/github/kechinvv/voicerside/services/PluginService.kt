@@ -70,6 +70,7 @@ class PluginService {
             }
             caretModel.moveToOffset(caretModel.offset + performedContent.length)
         }
+        if (message.type == ModelMessage.Type.TEXT) startSentenceOffset = -1
     }
 
     fun runRecognition(editor: Editor) {
@@ -109,7 +110,6 @@ class PluginService {
                             displayMessage(editor, formattedMessage)
                             performers.clear()  // TODO: replace with `stop` command
                         }
-                        startSentenceOffset = -1
                     }
                 }
             }
